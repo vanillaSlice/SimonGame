@@ -1,3 +1,10 @@
+/*
+ * COLOURS
+ *   Calico     - #dcb687
+ *   Mine Shaft - #303030
+ *   Cod Gray   - #171717
+ */
+
 html {
   font-size: 62.5%;
 }
@@ -17,68 +24,119 @@ body {
   text-align: center;
   min-height: 100%;
   min-height: 100vh;
-  font-size: 1.6rem;
 }
 
 * {
   box-sizing: border-box;
 }
 
-.simon {
+main {
+  margin: 2rem;
+}
+
+#simon {
+  position: relative;
+  background-color: #303030;
+  box-shadow: 0 0 1.5rem #171717;
   width: 45rem;
   height: 45rem;
-  background-color: #2a2a2a;
-  box-shadow: 0 0 1.5rem #151515;
   border-radius: 50%;
-  position: relative;
+}
+
+
+/* done up to here */
+
+.btn {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  border: 2.5rem solid #303030;
 }
 
 .green {
-  border: 1.25rem solid #2a2a2a;
-  width: 22.5rem;
-  height: 22.5rem;
-  position: absolute;
-  background-color: #4DD95C;
+  background-color: #0AB552;
   border-top-left-radius: 100%;
+  border-bottom-width: 1.25rem;
+  border-right-width: 1.25rem;
+}
+
+.green:hover {
+  background-color: #56FF9E;
 }
 
 .red {
-  border: 1.25rem solid #2a2a2a;
-  width: 22.5rem;
-  height: 22.5rem;
-  position: absolute;
-  left: 22.5rem;
-  background-color: #F8341C;
+  left: 50%;
+  background-color: #E6281D;
   border-top-right-radius: 100%;
+  border-bottom-width: 1.25rem;
+  border-left-width: 1.25rem;
+}
+
+.red:hover {
+  background-color: #FF7469;
 }
 
 .yellow {
-  border: 1.25rem solid #2a2a2a;
-  width: 22.5rem;
-  height: 22.5rem;
-  position: absolute;
-  top: 22.5rem;
-  background-color: #FFF637;
+  top: 50%;
+  background-color: #CEC92E;
   border-bottom-left-radius: 100%;
+  border-top-width: 1.25rem;
+  border-right-width: 1.25rem;
+}
+
+.yellow:hover {
+  background-color: #FFFF7A;
 }
 
 .blue {
-  border: 1.25rem solid #2a2a2a;
-  width: 22.5rem;
-  height: 22.5rem;
-  position: absolute;
-  top: 22.5rem;
-  left: 22.5rem;
-  background-color: #04A4F0;
+  top: 50%;
+  left: 50%;
+  background-color: #005BC0;
   border-bottom-right-radius: 100%;
+  border-top-width: 1.25rem;
+  border-left-width: 1.25rem;
+}
+
+.blue:hover {
+  background-color: #33A7FF;
 }
 
 .center {
   border-radius: 50%;
-  width: 20rem;
-  height: 20rem;
+  width: 50%;
+  height: 50%;
   position: absolute;
-  top: 12.5rem;
-  left: 12.5rem;
-  background-color: #2a2a2a;
+  top: 25%;
+  left: 25%;
+  background-color: #303030;
+}
+
+h1 {
+  font-family: 'Monoton', cursive;
+  color: #FCFCFC;
+  font-size: 4rem;
+  text-align: center;
+  margin-top: 25%;
+}
+
+#score {
+  font-family: 'VT323', monospace;
+  font-size: 4rem;
+  color: maroon;
+  margin-left: 5%;
+  width: 25%;
+}
+
+#text {
+  font-family: 'Roboto Condensed', sans-serif;
+  color: #FCFCFC;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+@media (max-width: 30.625em) {
+  #simon {
+    width: 90vw;
+    height: 90vw;
+  }
 }
