@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Simon Game</title>
-  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Monoton|VT323|Roboto+Condensed">
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Monoton%7CVT323%7CRoboto+Condensed">
   <link rel="stylesheet" type="text/css" href="./reset.css">
   <link rel="stylesheet" type="text/css" href="./main.css">
 </head>
@@ -14,25 +14,35 @@
 <body>
   <main>
     <div id="simon">
-      <div class="btn green">
-
-      </div>
-      <div class="btn red">
-
-      </div>
-      <div class="btn yellow">
-
-      </div>
-      <div class="btn blue">
-
-      </div>
-      <div class="center">
+      <div class="btn" id="green"></div>
+      <div class="btn" id="red"></div>
+      <div class="btn" id="yellow"></div>
+      <div class="btn" id="blue"></div>
+      <div id="center">
         <h1>Simon‌</h1>
-        <div id="score">
-          00
+        <div class="ctrl" id="count-ctrl">
+          <div id="screen">
+            <span id="count">--</span>
+          </div>
+          <span>COUNT</span>
         </div>
-        <div id="text">START</div>
-
+        <div class="ctrl" id="start-ctrl">
+          <button type="button" id="start"></button>
+          <span>START</span>
+        </div>
+        <div class="ctrl" id="strict-ctrl">
+          <div id="light"></div>
+          <button type="button" id="strict"></button>
+          <span>STRICT</span>
+        </div>
+        <div class="ctrl" id="power-ctrl">
+          <span>OFF</span>
+          <label id="switch">
+            <input type="checkbox" id="power">
+            <span id="slider"></span>
+          </label>
+          <span>ON</span>
+        </div>
       </div>
     </div>
   </main>
