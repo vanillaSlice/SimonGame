@@ -45,10 +45,6 @@ body {
   outline: none;
 }
 
-.clickable {
-  cursor: pointer;
-}
-
 main {
   margin: 2rem;
 }
@@ -67,6 +63,10 @@ main {
   width: 50%;
   height: 50%;
   border: 2.5rem solid #303030;
+}
+
+.btn.clickable {
+  cursor: pointer;
 }
 
 #green.btn {
