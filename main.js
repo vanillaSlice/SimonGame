@@ -12,7 +12,8 @@ window.addEventListener('load', function () {
       red: createSound(220.00),
       yellow: createSound(277.18),
       blue: createSound(329.63),
-      error: createSound(110.00, 'triangle')
+      error: createSound(110.00, 'triangle'),
+      win: createSound(277.18)
     };
 
   function createSound(frequency, type) {
@@ -58,38 +59,42 @@ window.addEventListener('load', function () {
       blue: document.getElementById('blue')
     },
     screenElement = document.getElementById('screen'),
-    countElement = document.getElementById('count'),
+    screenTextElement = document.getElementById('screen-text'),
     startButtonElement = document.getElementById('start'),
-    strictLightElement = document.getElementById('light'),
     strictButtonElement = document.getElementById('strict'),
+    strictLightElement = document.getElementById('light'),
     powerButtonElement = document.getElementById('power');
 
   /*
-   * Variables.
+   * Constants. 
    */
   var colours = ['green', 'red', 'yellow', 'blue'],
-    isOn = false,
-    strictMode = false,
-    sequence = [],
-    currentSequenceCount = 0,
-    acceptingButtonPresses = false,
-    playerSequenceIndex = 0,
-    timeoutId,
     speedTimeouts = {
       1: 1000,
       5: 850,
       9: 700,
       13: 550
     },
-    speedTimeout = 1000,
     errorTimeouts = {
       1: 5000,
       5: 4000,
       9: 3000,
       13: 2000
     },
-    errorTimeout = 5000,
-    screenFlashTimeout = 300;
+    timeout = 300,
+    winningScore = 20;
+
+  /*
+   * Variables.
+   */
+  var isOn = false,
+    strictMode = false,
+    sequence = [],
+    locked = true,
+    playerIndex = 0,
+    speedTimeout = speedTimeouts[1],
+    errorTimeout = errorTimeouts[1],
+    timeoutIds = {};
 
   /*
    * Add event listeners.
@@ -111,20 +116,46 @@ window.addEventListener('load', function () {
   }
 
   function turnPowerOff() {
-    clearTimeout(timeoutId);
-    isOn = false;
-    screenElement.classList.remove('lit');
-    countElement.innerText = '--';
+    resetGame();
     strictMode = false;
     strictLightElement.classList.remove('lit');
-    resetButtons();
-    stopSounds();
+    isOn = false;
+    screenElement.classList.remove('lit');
   }
 
-  function resetButtons() {
+  function resetGame() {
+    clearTimeouts();
+    screenTextElement.innerText = '--';
+    lockButtons();
+    stopSounds();
+    sequence = [];
+    playerIndex = 0;
+    speedTimeout = speedTimeouts[1];
+    errorTimeout = errorTimeouts[1];
+  }
+
+  function clearTimeouts() {
+    for (var key in timeoutIds) {
+      if (timeoutIds.hasOwnProperty(key)) {
+        clearTimeout(timeoutIds[key]);
+      }
+    }
+  }
+
+  function lockButtons() {
+    locked = true;
     for (var key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
         buttonElements[key].classList = 'btn';
+      }
+    }
+  }
+
+  function unlockButtons() {
+    locked = false;
+    for (var key in buttonElements) {
+      if (buttonElements.hasOwnProperty(key)) {
+        buttonElements[key].classList = 'btn clickable';
       }
     }
   }
@@ -137,38 +168,25 @@ window.addEventListener('load', function () {
     }
   }
 
-  startButtonElement.addEventListener('click', resetGame);
+  startButtonElement.addEventListener('click', startNewGame);
 
-  function resetGame() {
+  // done up to here
+  function startNewGame() {
     if (isOn) {
-      clearTimeout(timeoutId);
-      countElement.innerText = '--';
-      screenElement.classList.add('lit');
-      sequence = [];
-      currentSequenceCount = 0;
-      acceptingButtonPresses = false;
-      playerSequenceIndex = 0;
-      resetButtons();
-      stopSounds();
+      resetGame();
       addNewColourToSequence();
-      makeScreenFlashThenStartNewRound();
+      makeScreenFlash(2, playSequenceAfterTimeout);
     }
   }
 
   function addNewColourToSequence() {
     var colour = colours[Math.floor(Math.random() * colours.length)];
     sequence.push(colour);
-    currentSequenceCount = sequence.length;
-  }
-
-  function makeScreenFlashThenStartNewRound() {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(makeScreenFlash, screenFlashTimeout, 2, newRound);
   }
 
   function makeScreenFlash(flashes, onComplete) {
     if (flashes < 1) {
-      startCompletionTask(onComplete);
+      onComplete();
       return;
     } else if (screenElement.classList.contains('lit')) {
       screenElement.classList.remove('lit');
@@ -176,59 +194,30 @@ window.addEventListener('load', function () {
       screenElement.classList.add('lit');
       flashes--;
     }
-    continueScreenFlash(flashes, onComplete);
+    timeoutIds.screenFlash =
+      setTimeout(makeScreenFlash, timeout, flashes, onComplete);
   }
 
-  function startCompletionTask(onComplete) {
-    timeoutId = setTimeout(onComplete, screenFlashTimeout);
-  }
-
-  function continueScreenFlash(flashes, onComplete) {
-    timeoutId = setTimeout(makeScreenFlash, screenFlashTimeout, flashes, onComplete);
-  }
-
-  function newRound() {
-    updateScreenText();
-    acceptingButtonPresses = false;
-    playerSequenceIndex = 0;
-    resetButtons();
-    stopSounds();
-    updateSpeedTimeout();
-    updateErrorTimeout();
-    playSequence();
-  }
-
-  function updateScreenText() {
-    countElement.innerText = (currentSequenceCount < 10) ?
-      '0' + currentSequenceCount : currentSequenceCount;
-  }
-
-  function updateSpeedTimeout() {
-    if (speedTimeouts.hasOwnProperty(currentSequenceCount)) {
-      speedTimeout = speedTimeouts[currentSequenceCount];
-    }
-  }
-
-  function updateErrorTimeout() {
-    if (errorTimeouts.hasOwnProperty(currentSequenceCount)) {
-      errorTimeout = errorTimeouts[currentSequenceCount];
-    }
+  function playSequenceAfterTimeout(index) {
+    index = index || 0;
+    timeoutIds.sequence = setTimeout(playSequence, timeout, index);
   }
 
   function playSequence(index) {
-    index = index || 0;
-    if (index < currentSequenceCount) {
+    if (index === 0) {
+      updateScreenScore();
+    }
+    if (index < sequence.length) {
       playSequenceColour(index);
     } else {
-      //add clickable to buttons
-      acceptingButtonPresses = true;
-      for (var key in buttonElements) {
-        if (buttonElements.hasOwnProperty(key)) {
-          buttonElements[key].classList.add('clickable');
-        }
-      }
+      unlockButtons();
       startErrorTimeout();
     }
+  }
+
+  function updateScreenScore() {
+    screenTextElement.innerText =
+      (sequence.length < 10) ? '0' + sequence.length : sequence.length;
   }
 
   function playSequenceColour(index) {
@@ -238,26 +227,33 @@ window.addEventListener('load', function () {
     buttonElement.classList.add('lit');
     sound.play();
     index++;
-    timeoutId = setTimeout(stopColourAndContinuePlayingSequence, speedTimeout / 2,
-      buttonElement, sound, index);
+    stopColourAndContinuePlayingSequenceAfterTimeout(buttonElement, sound, index);
+  }
+
+  function stopColourAndContinuePlayingSequenceAfterTimeout(buttonElement, sound, index) {
+    timeoutIds.sequence =
+      setTimeout(stopColourAndContinuePlayingSequence, speedTimeout / 2, buttonElement, sound, index);
   }
 
   function stopColourAndContinuePlayingSequence(buttonElement, sound, index) {
     buttonElement.classList.remove('lit');
     sound.stop();
-    timeoutId = setTimeout(playSequence, speedTimeout, index);
+    timeoutIds.sequence = setTimeout(playSequence, speedTimeout, index);
   }
 
   function startErrorTimeout() {
-    timeoutId = setTimeout(errorTimeoutCallback, errorTimeout);
+    timeoutIds.error = setTimeout(errorTimeoutCallback, errorTimeout);
   }
 
   function errorTimeoutCallback() {
-    var onComplete = (strictMode) ? resetGame : newRound;
+    var onComplete = (strictMode) ? startNewGame : playSequenceAfterTimeout;
     sounds.error.play();
-    countElement.innerText = '!!';
-    timeoutId = setTimeout(makeScreenFlash, screenFlashTimeout, 3, onComplete);
+    screenTextElement.innerText = '!!';
+
+    timeoutIds.error = setTimeout(makeScreenFlash, timeout, 3, onComplete);
   }
+
+  /////////////
 
   strictButtonElement.addEventListener('click', toggleStrictMode);
 
@@ -265,6 +261,8 @@ window.addEventListener('load', function () {
     strictMode = (isOn) ? !strictMode : false;
     strictLightElement.classList.toggle('lit', strictMode);
   }
+
+  /////////////
 
   (function () {
     for (var key in buttonElements) {
@@ -285,7 +283,7 @@ window.addEventListener('load', function () {
     if (isOn && this.classList.contains('clickable')) {
       this.classList.add('lit');
       sounds[this.id].play();
-      if (this.id === sequence[playerSequenceIndex]) {
+      if (this.id === sequence[playerIndex]) {
         moveToNext = true;
       } else {
         moveToNext = false;
@@ -303,14 +301,14 @@ window.addEventListener('load', function () {
   function btnReleasedCallback() {
     if (moveToNext) {
       clearTimeout(timeoutId);
-      playerSequenceIndex++;
-      if (playerSequenceIndex === currentSequenceCount) {
+      playerIndex++;
+      if (playerIndex === currentSequenceCount) {
         addNewColourToSequence();
         newRound();
       }
       moveToNext = false;
     }
-    if (!acceptingButtonPresses) {
+    if (!locked) {
       return;
     }
     for (var key in buttonElements) {
