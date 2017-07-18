@@ -69,7 +69,7 @@ window.addEventListener('load', function () {
    * Constants. 
    */
   var colours = ['green', 'red', 'yellow', 'blue'],
-    speedTimeouts = {
+    speedIntervals = {
       1: 1000,
       5: 850,
       9: 700,
@@ -81,7 +81,7 @@ window.addEventListener('load', function () {
       9: 3000,
       13: 2000
     },
-    timeout = 300,
+    screenFlashInterval = 300,
     winningScore = 20;
 
   /*
@@ -89,12 +89,13 @@ window.addEventListener('load', function () {
    */
   var isOn = false,
     strictMode = false,
-    sequence = [],
     locked = true,
-    playerIndex = 0,
-    speedTimeout = speedTimeouts[1],
-    errorTimeout = errorTimeouts[1],
-    timeoutIds = {};
+    sequence,
+    playerIndex,
+    previousColour,
+    speedInterval,
+    errorTimeout,
+    timerIds = {};
 
   /*
    * Add event listeners.
@@ -116,46 +117,34 @@ window.addEventListener('load', function () {
   }
 
   function turnPowerOff() {
-    resetGame();
-    strictMode = false;
-    strictLightElement.classList.remove('lit');
+    clearTimedEvents();
     isOn = false;
-    screenElement.classList.remove('lit');
-  }
-
-  function resetGame() {
-    clearTimeouts();
     screenTextElement.innerText = '--';
-    lockButtons();
+    screenElement.classList.remove('lit');
+    turnOffStrictMode();
+    disableButtons();
     stopSounds();
-    sequence = [];
-    playerIndex = 0;
-    speedTimeout = speedTimeouts[1];
-    errorTimeout = errorTimeouts[1];
   }
 
-  function clearTimeouts() {
-    for (var key in timeoutIds) {
-      if (timeoutIds.hasOwnProperty(key)) {
-        clearTimeout(timeoutIds[key]);
+  function clearTimedEvents() {
+    for (var key in timerIds) {
+      if (timerIds.hasOwnProperty(key)) {
+        clearTimeout(timerIds[key]);
+        clearInterval(timerIds[key]);
       }
     }
   }
 
-  function lockButtons() {
+  function turnOffStrictMode() {
+    strictMode = false;
+    strictLightElement.classList.remove('lit');
+  }
+
+  function disableButtons() {
     locked = true;
     for (var key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
         buttonElements[key].classList = 'btn';
-      }
-    }
-  }
-
-  function unlockButtons() {
-    locked = false;
-    for (var key in buttonElements) {
-      if (buttonElements.hasOwnProperty(key)) {
-        buttonElements[key].classList = 'btn clickable';
       }
     }
   }
@@ -170,157 +159,170 @@ window.addEventListener('load', function () {
 
   startButtonElement.addEventListener('click', startNewGame);
 
-  // done up to here
   function startNewGame() {
     if (isOn) {
-      resetGame();
-      addNewColourToSequence();
-      makeScreenFlash(2, playSequenceAfterTimeout);
-    }
-  }
-
-  function addNewColourToSequence() {
-    var colour = colours[Math.floor(Math.random() * colours.length)];
-    sequence.push(colour);
-  }
-
-  function makeScreenFlash(flashes, onComplete) {
-    if (flashes < 1) {
-      onComplete();
-      return;
-    } else if (screenElement.classList.contains('lit')) {
-      screenElement.classList.remove('lit');
-    } else {
+      clearTimedEvents();
+      screenTextElement.innerText = '--';
       screenElement.classList.add('lit');
-      flashes--;
-    }
-    timeoutIds.screenFlash =
-      setTimeout(makeScreenFlash, timeout, flashes, onComplete);
-  }
-
-  function playSequenceAfterTimeout(index) {
-    index = index || 0;
-    timeoutIds.sequence = setTimeout(playSequence, timeout, index);
-  }
-
-  function playSequence(index) {
-    if (index === 0) {
-      updateScreenScore();
-    }
-    if (index < sequence.length) {
-      playSequenceColour(index);
-    } else {
-      unlockButtons();
-      startErrorTimeout();
+      disableButtons();
+      stopSounds();
+      makeScreenFlash(4);
+      sequence = [getRandomColour()];
+      timerIds.playSequence = setTimeout(playSequence, screenFlashInterval * 5);
     }
   }
 
-  function updateScreenScore() {
-    screenTextElement.innerText =
-      (sequence.length < 10) ? '0' + sequence.length : sequence.length;
+  function makeScreenFlash(toggles) {
+    timerIds.screenFlash = setInterval(function () {
+      if (toggles < 1) {
+        clearInterval(timerIds.screenFlash);
+      } else {
+        screenElement.classList.toggle('lit');
+      }
+      toggles--;
+    }, screenFlashInterval);
   }
 
-  function playSequenceColour(index) {
+  function getRandomColour() {
+    return colours[Math.floor(Math.random() * colours.length)];
+  }
+
+  function playSequence() {
+    var index = 0
+    clearTimedEvents();
+    disableButtons();
+    stopSounds();
+    playerIndex = 0;
+    speedInterval = speedIntervals[sequence.length] || speedInterval;
+    errorTimeout = errorTimeouts[sequence.length] || errorTimeout;
+    screenTextElement.innerText = (sequence.length < 10) ? '0' + sequence.length : sequence.length;
+    timerIds.playSequence = setInterval(function () {
+      if (index < sequence.length) {
+        playSequenceElement(index);
+        index++;
+      } else {
+        enableButtons();
+        timerIds.error = setTimeout(flagError, errorTimeout);
+        clearInterval(timerIds.playSequence);
+      }
+    }, speedInterval);
+  }
+
+  function playSequenceElement(index) {
     var colour = sequence[index],
       buttonElement = buttonElements[colour],
       sound = sounds[colour];
     buttonElement.classList.add('lit');
     sound.play();
-    index++;
-    stopColourAndContinuePlayingSequenceAfterTimeout(buttonElement, sound, index);
+    timerIds.stopSequenceElement = setTimeout(function () {
+      buttonElement.classList.remove('lit');
+      sound.stop();
+    }, speedInterval / 2);
   }
 
-  function stopColourAndContinuePlayingSequenceAfterTimeout(buttonElement, sound, index) {
-    timeoutIds.sequence =
-      setTimeout(stopColourAndContinuePlayingSequence, speedTimeout / 2, buttonElement, sound, index);
+  function enableButtons() {
+    locked = false;
+    for (var key in buttonElements) {
+      if (buttonElements.hasOwnProperty(key)) {
+        buttonElements[key].classList = 'btn clickable';
+      }
+    }
   }
 
-  function stopColourAndContinuePlayingSequence(buttonElement, sound, index) {
-    buttonElement.classList.remove('lit');
-    sound.stop();
-    timeoutIds.sequence = setTimeout(playSequence, speedTimeout, index);
-  }
-
-  function startErrorTimeout() {
-    timeoutIds.error = setTimeout(errorTimeoutCallback, errorTimeout);
-  }
-
-  function errorTimeoutCallback() {
-    var onComplete = (strictMode) ? startNewGame : playSequenceAfterTimeout;
+  function flagError() {
+    var timeout = screenFlashInterval * 7;
+    clearTimedEvents();
+    disableButtons();
+    stopSounds();
     sounds.error.play();
     screenTextElement.innerText = '!!';
-
-    timeoutIds.error = setTimeout(makeScreenFlash, timeout, 3, onComplete);
+    makeScreenFlash(6);
+    if (strictMode) {
+      timerIds.startNewGame = setTimeout(startNewGame, timeout);
+    } else {
+      timerIds.playSequence = setTimeout(playSequence, timeout);
+    }
   }
-
-  /////////////
 
   strictButtonElement.addEventListener('click', toggleStrictMode);
 
   function toggleStrictMode() {
-    strictMode = (isOn) ? !strictMode : false;
-    strictLightElement.classList.toggle('lit', strictMode);
+    if (isOn) {
+      strictMode = !strictMode;
+      strictLightElement.classList.toggle('lit', strictMode);
+    }
   }
-
-  /////////////
 
   (function () {
     for (var key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
-        var btnElement = buttonElements[key];
-        btnElement.addEventListener('mousedown', btnPressedCallback);
-        btnElement.addEventListener('touchstart', btnPressedCallback);
-        btnElement.addEventListener('mouseup', btnReleasedCallback);
-        btnElement.addEventListener('mouseleave', btnReleasedCallback);
-        btnElement.addEventListener('dragleave', btnReleasedCallback);
+        var buttonElement = buttonElements[key];
+        buttonElement.addEventListener('mousedown', buttonPressed);
+        buttonElement.addEventListener('touchstart', buttonPressed);
+        buttonElement.addEventListener('mouseup', buttonReleased);
+        buttonElement.addEventListener('mouseleave', buttonReleased);
+        buttonElement.addEventListener('dragleave', buttonReleased);
       }
     }
-    window.addEventListener('touchend', btnReleasedCallback);
+    window.addEventListener('touchend', buttonReleased);
   }());
 
-  // finish this method
-  function btnPressedCallback() {
+  function buttonPressed(event) {
+    event.stopPropagation();
     if (isOn && this.classList.contains('clickable')) {
       this.classList.add('lit');
       sounds[this.id].play();
       if (this.id === sequence[playerIndex]) {
-        moveToNext = true;
+        previousColour = this.id;
       } else {
-        moveToNext = false;
-        clearTimeout(timeoutId);
-        errorTimeoutCallback();
+        previousColour = null;
+        flagError();
       }
     } else {
-      moveToNext = false;
+      previousColour = null;
     }
   }
 
-  var moveToNext;
-
-  // finish this method
-  function btnReleasedCallback() {
-    if (moveToNext) {
-      clearTimeout(timeoutId);
-      playerIndex++;
-      if (playerIndex === currentSequenceCount) {
-        addNewColourToSequence();
-        newRound();
-      }
-      moveToNext = false;
-    }
-    if (!locked) {
+  function buttonReleased(event) {
+    if (locked) {
       return;
+    }
+    event.stopPropagation();
+    if (previousColour) {
+      clearTimedEvents();
+      playerIndex++;
+      if (playerIndex === winningScore) {
+        flagWin();
+      } else if (playerIndex === sequence.length) {
+        playerIndex = 0;
+        sequence.push(getRandomColour());
+        playSequence();
+      }
+      previousColour = null;
     }
     for (var key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
         buttonElements[key].classList.remove('lit');
       }
     }
-    for (key in sounds) {
-      if (sounds.hasOwnProperty(key)) {
-        sounds[key].stop();
+    stopSounds();
+  }
+
+  function flagWin() {
+    var ticks = 8;
+    screenTextElement.innerText = "**";
+    makeScreenFlash(8);
+    timerIds.win = setInterval(function () {
+      if (ticks < 1) {
+        clearTimedEvents();
+        startNewGame();
+      } else if (ticks % 2 == 0) {
+        sounds.win.play();
+      } else {
+        sounds.win.stop();
       }
-    }
+      ticks--;
+    }, screenFlashInterval);
   }
 
 });
