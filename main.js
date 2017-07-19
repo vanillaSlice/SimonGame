@@ -13,12 +13,12 @@ window.addEventListener('load', function () {
       yellow: createSound(277.18),
       blue: createSound(329.63),
       error: createSound(110.00, 'triangle'),
-      win: createSound(277.18)
+      win: createSound(440.00)
     };
 
   function createSound(frequency, type) {
-    var oscillator = createOscillator(frequency, type);
-    var gain = createGain();
+    var oscillator = createOscillator(frequency, type),
+      gain = createGain();
     oscillator.connect(gain);
     gain.connect(audioContext.destination);
     return Sound(gain);
@@ -81,21 +81,27 @@ window.addEventListener('load', function () {
       9: 3000,
       13: 2000
     },
-    screenFlashInterval = 300,
-    winningScore = 20;
+    screenFlashTimeout = 300,
+    screenFlashToggles = {
+      newGame: 4,
+      error: 6,
+      win: 8
+    },
+    winningScore = 2;
 
   /*
    * Variables.
    */
   var isOn = false,
     strictMode = false,
-    locked = true,
+    buttonsLocked = true,
     sequence,
     playerIndex,
     previousColour,
     speedInterval,
     errorTimeout,
-    timerIds = {};
+    intervalIds = [],
+    timeoutIds = [];
 
   /*
    * Add event listeners.
@@ -113,26 +119,44 @@ window.addEventListener('load', function () {
 
   function turnPowerOn() {
     isOn = true;
-    screenElement.classList.add('lit');
+    toggleScreenLight(true);
+  }
+
+  function toggleScreenLight(on) {
+    screenElement.classList.toggle('lit', on);
   }
 
   function turnPowerOff() {
-    clearTimedEvents();
     isOn = false;
-    screenTextElement.innerText = '--';
-    screenElement.classList.remove('lit');
+    clearTimedEvents();
+    setScreenText('--');
+    toggleScreenLight(false);
     turnOffStrictMode();
-    disableButtons();
+    lockButtons();
     stopSounds();
   }
 
   function clearTimedEvents() {
-    for (var key in timerIds) {
-      if (timerIds.hasOwnProperty(key)) {
-        clearTimeout(timerIds[key]);
-        clearInterval(timerIds[key]);
-      }
-    }
+    clearIntervals();
+    clearTimeouts();
+  }
+
+  function clearIntervals() {
+    intervalIds.forEach(function (id) {
+      clearInterval(id);
+    });
+    intervalIds = [];
+  }
+
+  function clearTimeouts() {
+    timeoutIds.forEach(function (id) {
+      clearTimeout(id);
+    });
+    timeoutIds = [];
+  }
+
+  function setScreenText(text) {
+    screenTextElement.innerText = text;
   }
 
   function turnOffStrictMode() {
@@ -140,9 +164,10 @@ window.addEventListener('load', function () {
     strictLightElement.classList.remove('lit');
   }
 
-  function disableButtons() {
-    locked = true;
-    for (var key in buttonElements) {
+  function lockButtons() {
+    var key;
+    buttonsLocked = true;
+    for (key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
         buttonElements[key].classList = 'btn';
       }
@@ -150,7 +175,8 @@ window.addEventListener('load', function () {
   }
 
   function stopSounds() {
-    for (var key in sounds) {
+    var key;
+    for (key in sounds) {
       if (sounds.hasOwnProperty(key)) {
         sounds[key].stop();
       }
@@ -160,88 +186,123 @@ window.addEventListener('load', function () {
   startButtonElement.addEventListener('click', startNewGame);
 
   function startNewGame() {
+    var toggles, timeout;
     if (isOn) {
+      toggles = screenFlashToggles.newGame;
+      timeout = (toggles + 1) * screenFlashTimeout;
       clearTimedEvents();
-      screenTextElement.innerText = '--';
-      screenElement.classList.add('lit');
-      disableButtons();
+      setScreenText('--');
+      toggleScreenLight(true);
+      lockButtons();
       stopSounds();
-      makeScreenFlash(4);
-      sequence = [getRandomColour()];
-      timerIds.playSequence = setTimeout(playSequence, screenFlashInterval * 5);
+      makeScreenFlash(toggles);
+      initNewSequence();
+      playSequence(timeout);
     }
   }
 
   function makeScreenFlash(toggles) {
-    timerIds.screenFlash = setInterval(function () {
-      if (toggles < 1) {
-        clearInterval(timerIds.screenFlash);
-      } else {
-        screenElement.classList.toggle('lit');
+    timeoutIds.push(setTimeout(function () {
+      if (toggles > 0) {
+        toggleScreenLight();
+        makeScreenFlash(toggles - 1);
       }
-      toggles--;
-    }, screenFlashInterval);
+    }, screenFlashTimeout));
+  }
+
+  function initNewSequence() {
+    sequence = [getRandomColour()];
   }
 
   function getRandomColour() {
     return colours[Math.floor(Math.random() * colours.length)];
   }
 
-  function playSequence() {
-    var index = 0
-    clearTimedEvents();
-    disableButtons();
-    stopSounds();
+  function playSequence(timeout) {
+    var index = 0;
     playerIndex = 0;
     speedInterval = speedIntervals[sequence.length] || speedInterval;
     errorTimeout = errorTimeouts[sequence.length] || errorTimeout;
-    screenTextElement.innerText = (sequence.length < 10) ? '0' + sequence.length : sequence.length;
-    timerIds.playSequence = setInterval(function () {
-      if (index < sequence.length) {
-        playSequenceElement(index);
-        index++;
-      } else {
-        enableButtons();
-        timerIds.error = setTimeout(flagError, errorTimeout);
-        clearInterval(timerIds.playSequence);
-      }
-    }, speedInterval);
+    timeoutIds.push(setTimeout(function () {
+      setScreenText(getCountString());
+      intervalIds.push(setInterval(function () {
+        if (index < sequence.length) {
+          playAndStopSequenceElement(index);
+          index++;
+        } else {
+          onSequenceComplete();
+        }
+      }, speedInterval));
+    }, timeout));
   }
 
-  function playSequenceElement(index) {
+  function getCountString() {
+    return (sequence.length < 10) ? '0' + sequence.length : sequence.length;
+  }
+
+  function playAndStopSequenceElement(index) {
     var colour = sequence[index],
       buttonElement = buttonElements[colour],
-      sound = sounds[colour];
-    buttonElement.classList.add('lit');
-    sound.play();
-    timerIds.stopSequenceElement = setTimeout(function () {
-      buttonElement.classList.remove('lit');
-      sound.stop();
-    }, speedInterval / 2);
+      sound = sounds[colour],
+      timeout = speedInterval / 2;
+    playSequenceElement(buttonElement, sound);
+    stopSequenceElement(buttonElement, sound, timeout);
   }
 
-  function enableButtons() {
-    locked = false;
-    for (var key in buttonElements) {
+  function playSequenceElement(buttonElement, sound) {
+    buttonElement.classList.add('lit');
+    sound.play();
+  }
+
+  function stopSequenceElement(buttonElement, sound, timeout) {
+    timeoutIds.push(setTimeout(function () {
+      buttonElement.classList.remove('lit');
+      sound.stop();
+    }, timeout));
+  }
+
+  function onSequenceComplete() {
+    clearTimedEvents();
+    unlockButtons();
+    startErrorTimeout();
+  }
+
+  function unlockButtons() {
+    var key;
+    buttonsLocked = false;
+    for (key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
         buttonElements[key].classList = 'btn clickable';
       }
     }
   }
 
+  function startErrorTimeout() {
+    timeoutIds.push(setTimeout(flagError, errorTimeout));
+  }
+
   function flagError() {
-    var timeout = screenFlashInterval * 7;
+    var toggles = screenFlashToggles.error,
+      timeout = screenFlashTimeout * (toggles + 1);
     clearTimedEvents();
-    disableButtons();
+    lockButtons();
     stopSounds();
-    sounds.error.play();
-    screenTextElement.innerText = '!!';
-    makeScreenFlash(6);
-    if (strictMode) {
-      timerIds.startNewGame = setTimeout(startNewGame, timeout);
-    } else {
-      timerIds.playSequence = setTimeout(playSequence, timeout);
-    }
+    playAndStopSound(sounds.error, timeout);
+    setScreenText('!!');
+    makeScreenFlash(toggles);
+    continueAfterError(timeout);
+  }
+
+  function playAndStopSound(sound, timeout) {
+    sound.play();
+    timeoutIds.push(setTimeout(function () {
+      sound.stop();
+    }, timeout));
+  }
+
+  function continueAfterError(timeout) {
+    timeoutIds.push(setTimeout((strictMode) ? startNewGame :
+      playSequence, timeout));
   }
 
   strictButtonElement.addEventListener('click', toggleStrictMode);
@@ -254,75 +315,98 @@ window.addEventListener('load', function () {
   }
 
   (function () {
-    for (var key in buttonElements) {
+    var key, buttonElement;
+    for (key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
-        var buttonElement = buttonElements[key];
+        buttonElement = buttonElements[key];
         buttonElement.addEventListener('mousedown', buttonPressed);
-        buttonElement.addEventListener('touchstart', buttonPressed);
         buttonElement.addEventListener('mouseup', buttonReleased);
         buttonElement.addEventListener('mouseleave', buttonReleased);
         buttonElement.addEventListener('dragleave', buttonReleased);
+        buttonElement.addEventListener('touchstart', buttonPressed);
+        buttonElement.addEventListener('touchend', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          buttonReleased();
+        });
       }
     }
-    window.addEventListener('touchend', buttonReleased);
   }());
 
-  function buttonPressed(event) {
-    event.stopPropagation();
-    if (isOn && this.classList.contains('clickable')) {
-      this.classList.add('lit');
-      sounds[this.id].play();
-      if (this.id === sequence[playerIndex]) {
-        previousColour = this.id;
+  function buttonPressed() {
+    var buttonElement = this,
+      colour;
+    if (isOn && !buttonsLocked) {
+      colour = buttonElement.id;
+      buttonElement.classList.add('lit');
+      sounds[colour].play();
+      if (colour === sequence[playerIndex]) {
+        previousColour = colour;
+        clearTimedEvents();
       } else {
-        previousColour = null;
         flagError();
       }
     } else {
-      previousColour = null;
+      previousColour = false;
     }
   }
 
-  function buttonReleased(event) {
-    if (locked) {
+  function buttonReleased() {
+    if (buttonsLocked || !isOn) {
       return;
     }
-    event.stopPropagation();
+    turnAllButtonsOff();
+    stopSounds();
     if (previousColour) {
-      clearTimedEvents();
-      playerIndex++;
-      if (playerIndex === winningScore) {
-        flagWin();
-      } else if (playerIndex === sequence.length) {
-        playerIndex = 0;
-        sequence.push(getRandomColour());
-        playSequence();
-      }
-      previousColour = null;
+      handleCorrectColourSelect();
     }
-    for (var key in buttonElements) {
+  }
+
+  function turnAllButtonsOff() {
+    var key;
+    for (key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
         buttonElements[key].classList.remove('lit');
       }
     }
-    stopSounds();
+  }
+
+  function handleCorrectColourSelect() {
+    playerIndex++;
+    if (hasWon()) {
+      flagWin();
+    } else if (shouldContinueSequence()) {
+      continueSequence();
+    }
+    previousColour = false;
+  }
+
+  function hasWon() {
+    return playerIndex === winningScore;
   }
 
   function flagWin() {
-    var ticks = 8;
-    screenTextElement.innerText = "**";
-    makeScreenFlash(8);
-    timerIds.win = setInterval(function () {
-      if (ticks < 1) {
-        clearTimedEvents();
-        startNewGame();
-      } else if (ticks % 2 == 0) {
-        sounds.win.play();
-      } else {
-        sounds.win.stop();
-      }
-      ticks--;
-    }, screenFlashInterval);
+    var timeout = screenFlashTimeout * (screenFlashToggles.win + 1);
+    lockButtons();
+    playAndStopSound(sounds.win, timeout);
+    setScreenText('**');
+    makeScreenFlash(screenFlashToggles.win);
+    continueAfterWin(timeout);
+  }
+
+  function continueAfterWin(timeout) {
+    timeoutIds.push(setTimeout(startNewGame, timeout));
+  }
+
+  function shouldContinueSequence() {
+    return playerIndex === sequence.length;
+  }
+
+  function continueSequence() {
+    playerIndex = 0;
+    sequence.push(getRandomColour());
+    lockButtons();
+    playSequence();
   }
 
 });
