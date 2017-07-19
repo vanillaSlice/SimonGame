@@ -87,7 +87,7 @@ window.addEventListener('load', function () {
       error: 6,
       win: 8
     },
-    winningScore = 2;
+    winningScore = 20;
 
   /*
    * Variables.
@@ -230,7 +230,7 @@ window.addEventListener('load', function () {
           playAndStopSequenceElement(index);
           index++;
         } else {
-          onSequenceComplete();
+          onPlaySequenceComplete();
         }
       }, speedInterval));
     }, timeout));
@@ -261,7 +261,7 @@ window.addEventListener('load', function () {
     }, timeout));
   }
 
-  function onSequenceComplete() {
+  function onPlaySequenceComplete() {
     clearTimedEvents();
     unlockButtons();
     startErrorTimeout();
@@ -342,7 +342,7 @@ window.addEventListener('load', function () {
       sounds[colour].play();
       if (colour === sequence[playerIndex]) {
         previousColour = colour;
-        clearTimedEvents();
+        clearTimedEvents(); // will stop error timeout
       } else {
         flagError();
       }
@@ -358,7 +358,13 @@ window.addEventListener('load', function () {
     turnAllButtonsOff();
     stopSounds();
     if (previousColour) {
-      handleCorrectColourSelect();
+      playerIndex++;
+      if (playerIndex === winningScore) {
+        flagWin();
+      } else if (playerIndex === sequence.length) {
+        continueSequence();
+      }
+      previousColour = false;
     }
   }
 
@@ -369,20 +375,6 @@ window.addEventListener('load', function () {
         buttonElements[key].classList.remove('lit');
       }
     }
-  }
-
-  function handleCorrectColourSelect() {
-    playerIndex++;
-    if (hasWon()) {
-      flagWin();
-    } else if (shouldContinueSequence()) {
-      continueSequence();
-    }
-    previousColour = false;
-  }
-
-  function hasWon() {
-    return playerIndex === winningScore;
   }
 
   function flagWin() {
@@ -396,10 +388,6 @@ window.addEventListener('load', function () {
 
   function continueAfterWin(timeout) {
     timeoutIds.push(setTimeout(startNewGame, timeout));
-  }
-
-  function shouldContinueSequence() {
-    return playerIndex === sequence.length;
   }
 
   function continueSequence() {
