@@ -19,40 +19,41 @@
 </head>
 
 <body>
-  <main>
-    <div id="simon">
-      <div class="btn" id="green"></div>
-      <div class="btn" id="red"></div>
-      <div class="btn" id="yellow"></div>
-      <div class="btn" id="blue"></div>
-      <div id="center">
-        <h1>Simon‌</h1>
-        <div class="ctrl" id="count-ctrl">
-          <div id="screen">
-            <span id="screen-text">--</span>
+  <main class="container">
+    <div class="simon">
+      <div class="btn green" data-colour="green"></div>
+      <div class="btn red" data-colour="red"></div>
+      <div class="btn yellow" data-colour="yellow"></div>
+      <div class="btn blue" data-colour="blue"></div>
+      <div class="center">
+        <h1 class="heading">Simon‌</h1>
+        <div class="ctrl count-ctrl">
+          <div class="screen">
+            <span class="screen-text">--</span>
           </div>
-          <span>COUNT</span>
+          <span class="ctrl-text">Count</span>
         </div>
-        <div class="ctrl" id="start-ctrl">
-          <button type="button" id="start"></button>
-          <span>START</span>
+        <div class="ctrl start-ctrl">
+          <button class="ctrl-btn" type="button"></button>
+          <span class="ctrl-text">Start</span>
         </div>
-        <div class="ctrl" id="strict-ctrl">
-          <div id="light"></div>
-          <button type="button" id="strict"></button>
-          <span>STRICT</span>
+        <div class="ctrl strict-ctrl">
+          <div class="ctrl-light"></div>
+          <button class="ctrl-btn" type="button"></button>
+          <span class="ctrl-text">Strict</span>
         </div>
-        <div class="ctrl" id="power-ctrl">
-          <span>OFF</span>
-          <label id="switch">
-            <input type="checkbox" id="power" autocomplete="off">
-            <span id="slider"></span>
+        <div class="ctrl power-ctrl">
+          <span class="ctrl-text">Off</span>
+          <label class="switch">
+            <input class="power-btn hidden" type="checkbox" autocomplete="off">
+            <span class="slider"></span>
           </label>
-          <span>ON</span>
+          <span class="ctrl-text">On</span>
         </div>
       </div>
     </div>
   </main>
+
   <script src="./main.js"></script>
 </body>
 

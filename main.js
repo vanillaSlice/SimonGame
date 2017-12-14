@@ -53,17 +53,17 @@ window.addEventListener('load', function () {
    * DOM elements.
    */
   var buttonElements = {
-      green: document.getElementById('green'),
-      red: document.getElementById('red'),
-      yellow: document.getElementById('yellow'),
-      blue: document.getElementById('blue')
+      green: document.querySelector('.green'),
+      red: document.querySelector('.red'),
+      yellow: document.querySelector('.yellow'),
+      blue: document.querySelector('.blue')
     },
-    screenElement = document.getElementById('screen'),
-    screenTextElement = document.getElementById('screen-text'),
-    startButtonElement = document.getElementById('start'),
-    strictButtonElement = document.getElementById('strict'),
-    strictLightElement = document.getElementById('light'),
-    powerButtonElement = document.getElementById('power');
+    screenElement = document.querySelector('.screen'),
+    screenTextElement = document.querySelector('.screen-text'),
+    startButtonElement = document.querySelector('.start-ctrl .ctrl-btn'),
+    strictButtonElement = document.querySelector('.strict-ctrl .ctrl-btn'),
+    strictLightElement = document.querySelector('.strict-ctrl .ctrl-light'),
+    powerButtonElement = document.querySelector('.power-btn');
 
   /*
    * Constants. 
@@ -169,7 +169,7 @@ window.addEventListener('load', function () {
     buttonsLocked = true;
     for (key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
-        buttonElements[key].classList = 'btn';
+        buttonElements[key].classList.remove('clickable');
       }
     }
   }
@@ -272,7 +272,7 @@ window.addEventListener('load', function () {
     buttonsLocked = false;
     for (key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
-        buttonElements[key].classList = 'btn clickable';
+        buttonElements[key].classList.add('clickable');
       }
     }
   }
@@ -337,7 +337,7 @@ window.addEventListener('load', function () {
     var buttonElement = this,
       colour;
     if (isOn && !buttonsLocked) {
-      colour = buttonElement.id;
+      colour = buttonElement.dataset.colour;
       buttonElement.classList.add('lit');
       sounds[colour].play();
       if (colour === sequence[playerIndex]) {
@@ -372,7 +372,7 @@ window.addEventListener('load', function () {
     var key;
     for (key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
-        buttonElements[key].classList.remove('lit');
+        buttonElements[key].classList.remove('lit', 'clickable');
       }
     }
   }
