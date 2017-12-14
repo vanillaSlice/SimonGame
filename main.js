@@ -6,27 +6,27 @@ window.addEventListener('load', function () {
    * Audio setup.
    */
 
-  var audioContext = new(window.AudioContext || window.webkitAudioContext)(),
-    sounds = {
-      green: createSound(164.81),
-      red: createSound(220.00),
-      yellow: createSound(277.18),
-      blue: createSound(329.63),
-      error: createSound(110.00, 'triangle'),
-      win: createSound(440.00)
-    };
+  var audioContext = new(window.AudioContext || window.webkitAudioContext)();
+  var sounds = {
+    green: createSound(164.81),
+    red: createSound(220.00),
+    yellow: createSound(277.18),
+    blue: createSound(329.63),
+    error: createSound(110.00, 'triangle'),
+    win: createSound(440.00)
+  };
 
   function createSound(frequency, type) {
-    var oscillator = createOscillator(frequency, type),
-      gain = createGain();
+    var oscillator = createOscillator(frequency, type);
+    var gain = createGain();
     oscillator.connect(gain);
     gain.connect(audioContext.destination);
-    return Sound(gain);
+    return Sound(gain, oscillator);
   }
 
   function createOscillator(frequency, type) {
     var oscillator = audioContext.createOscillator();
-    oscillator.frequency.value = frequency;
+    oscillator.frequency.setValueAtTime(frequency, 0);
     oscillator.type = type || 'sine';
     oscillator.start();
     return oscillator;
@@ -34,17 +34,17 @@ window.addEventListener('load', function () {
 
   function createGain() {
     var gain = audioContext.createGain();
-    gain.gain.value = 0;
+    gain.gain.setValueAtTime(0, 0);
     return gain;
   }
 
   function Sound(gain) {
     return {
       play: function () {
-        gain.gain.value = 1;
+        gain.gain.setTargetAtTime(1, audioContext.currentTime, 0.01);
       },
       stop: function () {
-        gain.gain.value = 0;
+        gain.gain.setTargetAtTime(0, audioContext.currentTime, 0.01);
       }
     };
   }
@@ -53,55 +53,55 @@ window.addEventListener('load', function () {
    * DOM elements.
    */
   var buttonElements = {
-      green: document.querySelector('.green'),
-      red: document.querySelector('.red'),
-      yellow: document.querySelector('.yellow'),
-      blue: document.querySelector('.blue')
-    },
-    screenElement = document.querySelector('.screen'),
-    screenTextElement = document.querySelector('.screen-text'),
-    startButtonElement = document.querySelector('.start-ctrl .ctrl-btn'),
-    strictButtonElement = document.querySelector('.strict-ctrl .ctrl-btn'),
-    strictLightElement = document.querySelector('.strict-ctrl .ctrl-light'),
-    powerButtonElement = document.querySelector('.power-btn');
+    green: document.querySelector('.green'),
+    red: document.querySelector('.red'),
+    yellow: document.querySelector('.yellow'),
+    blue: document.querySelector('.blue')
+  };
+  var screenElement = document.querySelector('.screen');
+  var screenTextElement = document.querySelector('.screen-text');
+  var startButtonElement = document.querySelector('.start-btn');
+  var strictButtonElement = document.querySelector('.strict-btn');
+  var strictLightElement = document.querySelector('.strict-ctrl .ctrl-light');
+  var powerButtonElement = document.querySelector('.power-btn');
 
   /*
    * Constants. 
    */
-  var colours = ['green', 'red', 'yellow', 'blue'],
-    speedIntervals = {
-      1: 1000,
-      5: 850,
-      9: 700,
-      13: 550
-    },
-    errorTimeouts = {
-      1: 5000,
-      5: 4000,
-      9: 3000,
-      13: 2000
-    },
-    screenFlashTimeout = 300,
-    screenFlashToggles = {
-      newGame: 4,
-      error: 6,
-      win: 8
-    },
-    winningScore = 20;
+  var colours = ['green', 'red', 'yellow', 'blue'];
+  var speedIntervals = {
+    1: 1000,
+    5: 850,
+    9: 700,
+    13: 550
+  };
+  var errorTimeouts = {
+    1: 5000,
+    5: 4000,
+    9: 3000,
+    13: 2000
+  };
+  var screenFlashTimeout = 300;
+  var screenFlashToggles = {
+    newGame: 4,
+    error: 6,
+    win: 8
+  };
+  var winningScore = 20;
 
   /*
    * Variables.
    */
-  var isOn = false,
-    strictMode = false,
-    buttonsLocked = true,
-    sequence,
-    playerIndex,
-    previousColour,
-    speedInterval,
-    errorTimeout,
-    intervalIds = [],
-    timeoutIds = [];
+  var isOn = false;
+  var strictMode = false;
+  var buttonsLocked = true;
+  var sequence;
+  var playerIndex;
+  var previousColour;
+  var speedInterval;
+  var errorTimeout;
+  var intervalIds = [];
+  var timeoutIds = [];
 
   /*
    * Add event listeners.
@@ -165,18 +165,16 @@ window.addEventListener('load', function () {
   }
 
   function lockButtons() {
-    var key;
     buttonsLocked = true;
-    for (key in buttonElements) {
+    for (var key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
-        buttonElements[key].classList.remove('clickable');
+        buttonElements[key].classList.remove('clickable', 'lit');
       }
     }
   }
 
   function stopSounds() {
-    var key;
-    for (key in sounds) {
+    for (var key in sounds) {
       if (sounds.hasOwnProperty(key)) {
         sounds[key].stop();
       }
@@ -186,19 +184,20 @@ window.addEventListener('load', function () {
   startButtonElement.addEventListener('click', startNewGame);
 
   function startNewGame() {
-    var toggles, timeout;
-    if (isOn) {
-      toggles = screenFlashToggles.newGame;
-      timeout = (toggles + 1) * screenFlashTimeout;
-      clearTimedEvents();
-      setScreenText('--');
-      toggleScreenLight(true);
-      lockButtons();
-      stopSounds();
-      makeScreenFlash(toggles);
-      initNewSequence();
-      playSequence(timeout);
+    if (!isOn) {
+      return;
     }
+
+    var toggles = screenFlashToggles.newGame;
+    var timeout = (toggles + 1) * screenFlashTimeout;
+    clearTimedEvents();
+    setScreenText('--');
+    toggleScreenLight(true);
+    lockButtons();
+    stopSounds();
+    makeScreenFlash(toggles);
+    initNewSequence();
+    playSequence(timeout);
   }
 
   function makeScreenFlash(toggles) {
@@ -241,10 +240,10 @@ window.addEventListener('load', function () {
   }
 
   function playAndStopSequenceElement(index) {
-    var colour = sequence[index],
-      buttonElement = buttonElements[colour],
-      sound = sounds[colour],
-      timeout = speedInterval / 2;
+    var colour = sequence[index];
+    var buttonElement = buttonElements[colour];
+    var sound = sounds[colour];
+    var timeout = speedInterval / 2;
     playSequenceElement(buttonElement, sound);
     stopSequenceElement(buttonElement, sound, timeout);
   }
@@ -268,9 +267,8 @@ window.addEventListener('load', function () {
   }
 
   function unlockButtons() {
-    var key;
     buttonsLocked = false;
-    for (key in buttonElements) {
+    for (var key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
         buttonElements[key].classList.add('clickable');
       }
@@ -282,8 +280,8 @@ window.addEventListener('load', function () {
   }
 
   function flagError() {
-    var toggles = screenFlashToggles.error,
-      timeout = screenFlashTimeout * (toggles + 1);
+    var toggles = screenFlashToggles.error;
+    var timeout = screenFlashTimeout * (toggles + 1);
     clearTimedEvents();
     lockButtons();
     stopSounds();
@@ -301,8 +299,7 @@ window.addEventListener('load', function () {
   }
 
   function continueAfterError(timeout) {
-    timeoutIds.push(setTimeout((strictMode) ? startNewGame :
-      playSequence, timeout));
+    timeoutIds.push(setTimeout((strictMode) ? startNewGame : playSequence, timeout));
   }
 
   strictButtonElement.addEventListener('click', toggleStrictMode);
@@ -315,10 +312,9 @@ window.addEventListener('load', function () {
   }
 
   (function () {
-    var key, buttonElement;
-    for (key in buttonElements) {
+    for (var key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
-        buttonElement = buttonElements[key];
+        var buttonElement = buttonElements[key];
         buttonElement.addEventListener('mousedown', buttonPressed);
         buttonElement.addEventListener('mouseup', buttonReleased);
         buttonElement.addEventListener('mouseleave', buttonReleased);
@@ -334,10 +330,9 @@ window.addEventListener('load', function () {
   }());
 
   function buttonPressed() {
-    var buttonElement = this,
-      colour;
     if (isOn && !buttonsLocked) {
-      colour = buttonElement.dataset.colour;
+      var buttonElement = this;
+      var colour = buttonElement.dataset.colour;
       buttonElement.classList.add('lit');
       sounds[colour].play();
       if (colour === sequence[playerIndex]) {
@@ -369,10 +364,9 @@ window.addEventListener('load', function () {
   }
 
   function turnAllButtonsOff() {
-    var key;
-    for (key in buttonElements) {
+    for (var key in buttonElements) {
       if (buttonElements.hasOwnProperty(key)) {
-        buttonElements[key].classList.remove('lit', 'clickable');
+        buttonElements[key].classList.remove('lit');
       }
     }
   }
