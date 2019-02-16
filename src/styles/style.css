@@ -29,7 +29,7 @@ html {
 }
 
 body {
-  background: #dcb687 url('./background.jpg');
+  background: #dcb687 url('../images/background.jpg');
   color: #fcfcfc;
   display: -webkit-box;
   display: -ms-flexbox;
