@@ -1,49 +1,8 @@
 /*
- * Audio setup.
+ * DOM Elements
  */
 
-window.AudioContext = window.AudioContext || window.webkitAudioContext;
-
-let audioContext;
-let sounds;
-
-function createSound(frequency, type) {
-  const oscillator = createOscillator(frequency, type);
-  const gain = createGain();
-  oscillator.connect(gain);
-  gain.connect(audioContext.destination);
-  return Sound(gain, oscillator);
-}
-
-function createOscillator(frequency, type) {
-  const oscillator = audioContext.createOscillator();
-  oscillator.frequency.setValueAtTime(frequency, 0);
-  oscillator.type = type || 'sine';
-  oscillator.start();
-  return oscillator;
-}
-
-function createGain() {
-  const gain = audioContext.createGain();
-  gain.gain.setValueAtTime(0, 0);
-  return gain;
-}
-
-function Sound(gain) {
-  return {
-    play: () => {
-      gain.gain.setTargetAtTime(1, audioContext.currentTime, 0.01);
-    },
-    stop: () => {
-      gain.gain.setTargetAtTime(0, audioContext.currentTime, 0.01);
-    },
-  };
-}
-
-/*
-  * DOM elements.
-  */
-const buttonElements = {
+const btnElements = {
   green: document.querySelector('.js-green-btn'),
   red: document.querySelector('.js-red-btn'),
   yellow: document.querySelector('.js-yellow-btn'),
@@ -51,14 +10,15 @@ const buttonElements = {
 };
 const screenElement = document.querySelector('.js-screen');
 const screenTextElement = document.querySelector('.js-screen-text');
-const startButtonElement = document.querySelector('.js-start-btn');
-const strictButtonElement = document.querySelector('.js-strict-btn');
+const startBtnElement = document.querySelector('.js-start-btn');
+const strictBtnElement = document.querySelector('.js-strict-btn');
 const strictLightElement = document.querySelector('.js-strict-light');
-const powerButtonElement = document.querySelector('.js-power-btn');
+const powerBtnElement = document.querySelector('.js-power-btn');
 
 /*
-  * Constants.
-  */
+ * Constants
+ */
+
 const colours = ['green', 'red', 'yellow', 'blue'];
 const speedIntervals = {
   1: 1000,
@@ -81,8 +41,9 @@ const screenFlashToggles = {
 const winningScore = 20;
 
 /*
- * Variables.
-  */
+ * State
+ */
+
 let isOn = false;
 let strictMode = false;
 let buttonsLocked = true;
@@ -95,13 +56,82 @@ let intervalIds = [];
 let timeoutIds = [];
 
 /*
- * Add event listeners.
+ * Sounds
  */
 
-powerButtonElement.addEventListener('change', togglePower);
+let sounds;
+
+function initialiseSounds() {
+  if (sounds) {
+    return;
+  }
+
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+  sounds = {
+    green: new Sound({
+      audioContext,
+      frequency: 164.81,
+    }),
+    red: new Sound({
+      audioContext,
+      frequency: 220.00,
+    }),
+    yellow: new Sound({
+      audioContext,
+      frequency: 277.18,
+    }),
+    blue: new Sound({
+      audioContext,
+      frequency: 329.63,
+    }),
+    error: new Sound({
+      audioContext,
+      frequency: 110.00,
+      wave: 'triangle',
+    }),
+    win: new Sound({
+      audioContext,
+      frequency: 440.00,
+    }),
+  };
+}
+
+class Sound {
+  constructor({ audioContext, frequency, wave = 'sine' }) {
+    this.audioContext = audioContext;
+
+    const oscillator = this.audioContext.createOscillator();
+    oscillator.frequency.setValueAtTime(frequency, 0);
+    oscillator.type = wave;
+    oscillator.start();
+
+    const gain = this.audioContext.createGain();
+    gain.gain.setValueAtTime(0, 0);
+    oscillator.connect(gain);
+    gain.connect(this.audioContext.destination);
+
+    this.gain = gain.gain;
+
+    this.play = this.play.bind(this);
+    this.stop = this.stop.bind(this);
+  }
+
+  play() {
+    this.gain.setTargetAtTime(1, this.audioContext.currentTime, 0.01);
+  }
+
+  stop() {
+    this.gain.setTargetAtTime(0, this.audioContext.currentTime, 0.01);
+  }
+}
+
+/*
+ * Functions.
+ */
 
 function togglePower() {
-  if (powerButtonElement.checked) {
+  if (powerBtnElement.checked) {
     turnPowerOn();
   } else {
     turnPowerOff();
@@ -109,17 +139,8 @@ function togglePower() {
 }
 
 function turnPowerOn() {
-  audioContext = new window.AudioContext();
-  sounds = {
-    green: createSound(164.81),
-    red: createSound(220.00),
-    yellow: createSound(277.18),
-    blue: createSound(329.63),
-    error: createSound(110.00, 'triangle'),
-    win: createSound(440.00),
-  };
-
   isOn = true;
+  initialiseSounds();
   toggleScreenLight(true);
 }
 
@@ -143,16 +164,12 @@ function clearTimedEvents() {
 }
 
 function clearIntervals() {
-  intervalIds.forEach((id) => {
-    clearInterval(id);
-  });
+  intervalIds.forEach(id => clearInterval(id));
   intervalIds = [];
 }
 
 function clearTimeouts() {
-  timeoutIds.forEach((id) => {
-    clearTimeout(id);
-  });
+  timeoutIds.forEach(id => clearTimeout(id));
   timeoutIds = [];
 }
 
@@ -167,18 +184,12 @@ function turnOffStrictMode() {
 
 function lockButtons() {
   buttonsLocked = true;
-  Object.keys(buttonElements).forEach((key) => {
-    buttonElements[key].classList.remove('clickable', 'lit');
-  });
+  Object.values(btnElements).forEach(btnElement => btnElement.classList.remove('clickable', 'lit'));
 }
 
 function stopSounds() {
-  Object.keys(sounds).forEach((key) => {
-    sounds[key].stop();
-  });
+  Object.values(sounds).forEach(sound => sound.stop());
 }
-
-startButtonElement.addEventListener('click', startNewGame);
 
 function startNewGame() {
   if (!isOn) {
@@ -233,26 +244,26 @@ function playSequence(timeout) {
 }
 
 function getCountString() {
-  return (sequence.length < 10) ? `0${sequence.length}` : sequence.length;
+  return sequence.length < 10 ? `0${sequence.length}` : sequence.length;
 }
 
 function playAndStopSequenceElement(index) {
   const colour = sequence[index];
-  const buttonElement = buttonElements[colour];
+  const btnElement = btnElements[colour];
   const sound = sounds[colour];
   const timeout = speedInterval / 2;
-  playSequenceElement(buttonElement, sound);
-  stopSequenceElement(buttonElement, sound, timeout);
+  playSequenceElement(btnElement, sound);
+  stopSequenceElement(btnElement, sound, timeout);
 }
 
-function playSequenceElement(buttonElement, sound) {
-  buttonElement.classList.add('lit');
+function playSequenceElement(btnElement, sound) {
+  btnElement.classList.add('lit');
   sound.play();
 }
 
-function stopSequenceElement(buttonElement, sound, timeout) {
+function stopSequenceElement(btnElement, sound, timeout) {
   timeoutIds.push(setTimeout(() => {
-    buttonElement.classList.remove('lit');
+    btnElement.classList.remove('lit');
     sound.stop();
   }, timeout));
 }
@@ -265,9 +276,7 @@ function onPlaySequenceComplete() {
 
 function unlockButtons() {
   buttonsLocked = false;
-  Object.keys(buttonElements).forEach((key) => {
-    buttonElements[key].classList.add('clickable');
-  });
+  Object.values(btnElements).forEach(btnElement => btnElement.classList.add('clickable'));
 }
 
 function startErrorTimeout() {
@@ -288,76 +297,74 @@ function flagError() {
 
 function playAndStopSound(sound, timeout) {
   sound.play();
-  timeoutIds.push(setTimeout(() => {
-    sound.stop();
-  }, timeout));
+  timeoutIds.push(setTimeout(sound.stop, timeout));
 }
 
 function continueAfterError(timeout) {
-  timeoutIds.push(setTimeout((strictMode) ? startNewGame : playSequence, timeout));
+  timeoutIds.push(setTimeout(strictMode ? startNewGame : playSequence, timeout));
 }
-
-strictButtonElement.addEventListener('click', toggleStrictMode);
 
 function toggleStrictMode() {
-  if (isOn) {
-    strictMode = !strictMode;
-    strictLightElement.classList.toggle('lit', strictMode);
+  if (!isOn) {
+    return;
   }
-}
 
-Object.keys(buttonElements).forEach((key) => {
-  const buttonElement = buttonElements[key];
-  buttonElement.addEventListener('mousedown', buttonPressed);
-  buttonElement.addEventListener('mouseup', buttonReleased);
-  buttonElement.addEventListener('mouseleave', buttonReleased);
-  buttonElement.addEventListener('dragleave', buttonReleased);
-  buttonElement.addEventListener('touchstart', buttonPressed);
-  buttonElement.addEventListener('touchend', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    buttonReleased();
-  });
-});
+  strictMode = !strictMode;
+  strictLightElement.classList.toggle('lit', strictMode);
+}
 
 function buttonPressed(e) {
-  if (isOn && !buttonsLocked) {
-    const buttonElement = e.target;
-    const { colour } = buttonElement.dataset;
-    buttonElement.classList.add('lit');
-    sounds[colour].play();
-    if (colour === sequence[playerIndex]) {
-      previousColour = colour;
-      clearTimedEvents(); // will stop error timeout
-    } else {
-      flagError();
-    }
-  } else {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (buttonsLocked || !isOn) {
     previousColour = false;
+    return;
   }
+
+  const btnElement = e.target;
+  const { colour } = btnElement.dataset;
+
+  btnElement.classList.add('lit');
+  sounds[colour].play();
+
+  if (colour !== sequence[playerIndex]) {
+    flagError();
+    return;
+  }
+
+  previousColour = colour;
+  clearTimedEvents();
 }
 
-function buttonReleased() {
+function buttonReleased(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
   if (buttonsLocked || !isOn) {
     return;
   }
+
   turnAllButtonsOff();
   stopSounds();
-  if (previousColour) {
-    playerIndex += 1;
-    if (playerIndex === winningScore) {
-      flagWin();
-    } else if (playerIndex === sequence.length) {
-      continueSequence();
-    }
-    previousColour = false;
+
+  if (!previousColour) {
+    return;
   }
+
+  playerIndex += 1;
+
+  if (playerIndex === winningScore) {
+    flagWin();
+  } else if (playerIndex === sequence.length) {
+    continueSequence();
+  }
+
+  previousColour = false;
 }
 
 function turnAllButtonsOff() {
-  Object.keys(buttonElements).forEach((key) => {
-    buttonElements[key].classList.remove('lit');
-  });
+  Object.values(btnElements).forEach(btnElement => btnElement.classList.remove('lit'));
 }
 
 function flagWin() {
@@ -379,3 +386,20 @@ function continueSequence() {
   lockButtons();
   playSequence();
 }
+
+/*
+ * Initialse
+ */
+
+powerBtnElement.addEventListener('change', togglePower);
+startBtnElement.addEventListener('click', startNewGame);
+strictBtnElement.addEventListener('click', toggleStrictMode);
+
+Object.values(btnElements).forEach((btnElement) => {
+  btnElement.addEventListener('mousedown', buttonPressed);
+  btnElement.addEventListener('mouseup', buttonReleased);
+  btnElement.addEventListener('mouseleave', buttonReleased);
+  btnElement.addEventListener('dragleave', buttonReleased);
+  btnElement.addEventListener('touchstart', buttonPressed);
+  btnElement.addEventListener('touchend', buttonReleased);
+});
