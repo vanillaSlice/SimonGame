@@ -1,26 +1,8 @@
-/*
- *  COLOURS
- *    Beige    - #dcb687
- *    White    - #fcfcfc
- *    Grey     - #303030
- *    Black    - #171717
- *    Green    - #0ab552
- *             - #57ff9f (30% lighter)
- *    Red      - #e6281d
- *             - #ff756a (30% lighter)
- *             - #cd0f04 (10% darker)
- *             - #4d0000 (60% darker)
- *             - #340000 (70% darker)
- *    Yellow   - #cec92e
- *             - #ffff7b (30% lighter)
- *    Blue     - #005bc0
- *             - #4da8ff (30% lighter)
- */
-
-
-/*
- * General styles.
- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 html {
   font-size: 0.5rem;
@@ -31,31 +13,11 @@ html {
 body {
   background: #dcb687 url('../images/background.jpg');
   color: #fcfcfc;
-  display: -webkit-box;
-  display: -ms-flexbox;
   display: flex;
   font-family: 'Roboto Condensed', sans-serif;
   font-size: 1.2rem;
   height: 100%;
 }
-
-*,
-*::before,
-*::after {
-  -webkit-box-sizing: border-box;
-          box-sizing: border-box;
-}
-
-@media (min-width: 30.625em) {
-  html {
-    font-size: 62.5%;
-  }
-}
-
-
-/*
- * Helpers.
- */
 
 .clickable {
   cursor: pointer;
@@ -65,11 +27,6 @@ body {
   display: none;
 }
 
-
-/*
- * Specific styles.
- */
-
 .container {
   margin: auto;
   padding: 2rem;
@@ -78,18 +35,10 @@ body {
 .simon {
   background-color: #303030;
   border-radius: 50%;
-  -webkit-box-shadow: 0 0 1.5rem #171717;
-          box-shadow: 0 0 1.5rem #171717;
+  box-shadow: 0 0 1.5rem #171717;
   height: 90vw;
   position: relative;
   width: 90vw;
-}
-
-@media (min-width: 30.625em) {
-  .simon {
-    height: 45rem;
-    width: 45rem;
-  }
 }
 
 .btn {
@@ -101,9 +50,9 @@ body {
 
 .green.btn {
   background-color: #0ab552;
-  border-top-left-radius: 100%;
   border-bottom-width: 1.25rem;
   border-right-width: 1.25rem;
+  border-top-left-radius: 100%;
 }
 
 .green.btn.lit {
@@ -112,9 +61,9 @@ body {
 
 .red.btn {
   background-color: #e6281d;
-  border-top-right-radius: 100%;
   border-bottom-width: 1.25rem;
   border-left-width: 1.25rem;
+  border-top-right-radius: 100%;
   left: 50%;
 }
 
@@ -125,8 +74,8 @@ body {
 .yellow.btn {
   background-color: #cec92e;
   border-bottom-left-radius: 100%;
-  border-top-width: 1.25rem;
   border-right-width: 1.25rem;
+  border-top-width: 1.25rem;
   top: 50%;
 }
 
@@ -137,8 +86,8 @@ body {
 .blue.btn {
   background-color: #005bc0;
   border-bottom-right-radius: 100%;
-  border-top-width: 1.25rem;
   border-left-width: 1.25rem;
+  border-top-width: 1.25rem;
   left: 50%;
   top: 50%;
 }
@@ -192,8 +141,7 @@ body {
 }
 
 .ctrl-btn:active {
-  -webkit-transform: translateY(0.15rem);
-          transform: translateY(0.15rem);
+  transform: translateY(0.15rem);
 }
 
 .ctrl-light {
@@ -244,15 +192,9 @@ body {
 }
 
 .power-ctrl {
-  -webkit-box-align: center;
-  -ms-flex-align: center;
   align-items: center;
-  display: -webkit-box;
-  display: -ms-flexbox;
   display: flex;
   height: 2rem;
-  -webkit-box-pack: center;
-  -ms-flex-pack: center;
   justify-content: center;
   margin-top: 7%;
   width: 100%;
@@ -279,8 +221,7 @@ body {
   position: absolute;
   right: 0;
   top: 0;
-  -webkit-transition: 0.4s;
-          transition: 0.4s;
+  transition: 0.4s;
 }
 
 .slider::before {
@@ -290,12 +231,21 @@ body {
   height: 1.2rem;
   left: 0.4rem;
   position: absolute;
-  -webkit-transition: 0.4s;
-          transition: 0.4s;
+  transition: 0.4s;
   width: 1.2rem;
 }
 
-.power-btn:checked + .slider::before {
-  -webkit-transform: translateX(1.2rem);
-          transform: translateX(1.2rem);
+.power-btn:checked+.slider::before {
+  transform: translateX(1.2rem);
+}
+
+@media (min-width: 30.625em) {
+  html {
+    font-size: 62.5%;
+  }
+
+  .simon {
+    height: 45rem;
+    width: 45rem;
+  }
 }

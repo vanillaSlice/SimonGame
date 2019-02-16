@@ -26,31 +26,31 @@
 <body>
   <main class="container">
     <div class="simon">
-      <div class="btn green" data-colour="green"></div>
-      <div class="btn red" data-colour="red"></div>
-      <div class="btn yellow" data-colour="yellow"></div>
-      <div class="btn blue" data-colour="blue"></div>
+      <div class="btn green js-green-btn" data-colour="green"></div>
+      <div class="btn red js-red-btn" data-colour="red"></div>
+      <div class="btn yellow js-yellow-btn" data-colour="yellow"></div>
+      <div class="btn blue js-blue-btn" data-colour="blue"></div>
       <div class="center">
         <h1 class="heading">Simon‌</h1>
         <div class="ctrl count-ctrl">
-          <div class="screen">
-            <span class="screen-text">--</span>
+          <div class="screen js-screen">
+            <span class="screen-text js-screen-text">--</span>
           </div>
           <span class="ctrl-text">Count</span>
         </div>
         <div class="ctrl start-ctrl">
-          <button class="ctrl-btn start-btn" type="button" aria-label="Start"></button>
+          <button class="ctrl-btn js-start-btn" type="button" aria-label="Start"></button>
           <span class="ctrl-text">Start</span>
         </div>
         <div class="ctrl strict-ctrl">
-          <div class="ctrl-light"></div>
-          <button class="ctrl-btn strict-btn" type="button" aria-label="Strict"></button>
+          <div class="ctrl-light js-strict-light"></div>
+          <button class="ctrl-btn js-strict-btn" type="button" aria-label="Strict"></button>
           <span class="ctrl-text">Strict</span>
         </div>
         <div class="ctrl power-ctrl">
           <span class="ctrl-text">Off</span>
           <label class="switch">
-            <input class="power-btn hidden" type="checkbox" autocomplete="off">
+            <input class="power-btn hidden js-power-btn" type="checkbox" autocomplete="off">
             <span class="slider"></span>
           </label>
           <span class="ctrl-text">On</span>
