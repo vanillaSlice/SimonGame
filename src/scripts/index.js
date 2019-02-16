@@ -44,17 +44,17 @@ function Sound(gain) {
   * DOM elements.
   */
 const buttonElements = {
-  green: document.querySelector('.green'),
-  red: document.querySelector('.red'),
-  yellow: document.querySelector('.yellow'),
-  blue: document.querySelector('.blue'),
+  green: document.querySelector('.js-green-btn'),
+  red: document.querySelector('.js-red-btn'),
+  yellow: document.querySelector('.js-yellow-btn'),
+  blue: document.querySelector('.js-blue-btn'),
 };
-const screenElement = document.querySelector('.screen');
-const screenTextElement = document.querySelector('.screen-text');
-const startButtonElement = document.querySelector('.start-btn');
-const strictButtonElement = document.querySelector('.strict-btn');
-const strictLightElement = document.querySelector('.strict-ctrl .ctrl-light');
-const powerButtonElement = document.querySelector('.power-btn');
+const screenElement = document.querySelector('.js-screen');
+const screenTextElement = document.querySelector('.js-screen-text');
+const startButtonElement = document.querySelector('.js-start-btn');
+const strictButtonElement = document.querySelector('.js-strict-btn');
+const strictLightElement = document.querySelector('.js-strict-light');
+const powerButtonElement = document.querySelector('.js-power-btn');
 
 /*
   * Constants.
