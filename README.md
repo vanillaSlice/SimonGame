@@ -1,7 +1,7 @@
 # Simon Game
 
 [![Latest Release](https://img.shields.io/github/release/vanillaSlice/SimonGame.svg)](https://github.com/vanillaSlice/SimonGame/releases/latest)
-[![Build Status](https://img.shields.io/travis/vanillaSlice/SimonGame/master.svg)](https://travis-ci.org/vanillaSlice/SimonGame)
+[![Build Status](https://img.shields.io/travis/com/vanillaSlice/SimonGame/master.svg)](https://travis-ci.com/vanillaSlice/SimonGame)
 [![License](https://img.shields.io/github/license/vanillaSlice/SimonGame.svg)](LICENSE)
 
 *Advanced Front End Development Project for FreeCodeCamp.*
